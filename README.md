@@ -57,23 +57,27 @@ consul-service-mesh/
 
 ### Terraform
 
-- **`main.tf`**: Provisions an AWS VPC (3 public + 3 private subnets) and an EKS cluster with 3 `t3.small` worker nodes. Includes the EBS CSI driver addon required by Consul for persistent storage.
-- **`variables.tf`**: Configurable parameters, including AWS region (default `ap-southeast-1`), VPC CIDR blocks, Kubernetes version (`1.31`), cluster name, and AWS credentials.
-- **`providers.tf`**: AWS Terraform provider (v5.3+).
-- **`data.tf`**: Fetches available AWS availability zones.
+| File | Description |
+|------|-------------|
+| `main.tf` | Provisions an AWS VPC (3 public + 3 private subnets) and an EKS cluster with 3 `t3.small` worker nodes. Includes the EBS CSI driver addon required by Consul for persistent storage. |
+| `variables.tf` | Configurable parameters: AWS region (default `ap-southeast-1`), VPC CIDR blocks, Kubernetes version (`1.31`), cluster name, and AWS credentials. |
+| `providers.tf` | AWS Terraform provider (v5.3+). |
+| `data.tf` | Fetches available AWS availability zones. |
 
 ### Kubernetes Manifests
 
-- **`config.yaml`**: Original Google Online Boutique manifests using direct service addresses. Used for non-mesh deployment.
-- **`config-consul.yaml`**: Modified manifests with Consul Connect annotations. Adds `consul.hashicorp.com/connect-service-upstreams` to define upstream dependencies, and changes service addresses from `<service>:<port>` to `localhost:<port>` so traffic routes through the local sidecar proxy.
-- **`consul-values.yaml`**: Helm chart values for installing Consul on EKS. Enables peering, TLS, sidecar injection (default on), mesh gateway, and the Consul UI (LoadBalancer). Uses `gp2` storage class.
-- **`consul-values-lke.yaml`**: Same as above but configured for Linode LKE, using `linode-block-storage-retain` storage class.
-- **`consul-mesh-gateway.yaml`**: Configures peering traffic to route through mesh gateways instead of requiring direct pod-to-pod connectivity between clusters.
-- **`exported-service.yaml`**: Makes `shippingservice` visible to the peered cluster, enabling cross-cluster failover.
-- **`service-resolver.yaml`**: Defines failover behavior. If `shippingservice` is unhealthy locally, route to the `lke` peer (15s connect timeout).
-- **`intentions.yaml`**: Authorization rules for cross-cluster service communication. Consul denies all traffic by default when mTLS is enabled, so intentions explicitly allow specific service-to-service calls.
-- **`debug-pod.yaml`**: A curl pod for manually testing service connectivity.
-- **`values-examples-with-explanations.yaml`**: Reference file with detailed comments explaining each Consul Helm chart option.
+| File | Description |
+|------|-------------|
+| `config.yaml` | Original Google Online Boutique manifests using direct service addresses. Used for non-mesh deployment. |
+| `config-consul.yaml` | Modified manifests with Consul Connect annotations. Changes service addresses from `<service>:<port>` to `localhost:<port>` so traffic routes through the local sidecar proxy. |
+| `consul-values.yaml` | Helm chart values for Consul on EKS. Enables peering, TLS, sidecar injection, mesh gateway, and the Consul UI. Uses `gp2` storage class. |
+| `consul-values-lke.yaml` | Same as above but for Linode LKE, using `linode-block-storage-retain` storage class. |
+| `consul-mesh-gateway.yaml` | Configures peering traffic to route through mesh gateways instead of direct pod-to-pod connectivity. |
+| `exported-service.yaml` | Makes `shippingservice` visible to the peered cluster for cross-cluster failover. |
+| `service-resolver.yaml` | Failover rules. If `shippingservice` is unhealthy locally, route to the `lke` peer (15s timeout). |
+| `intentions.yaml` | Authorization rules for cross-cluster communication. Consul denies all traffic by default with mTLS, so intentions explicitly allow specific calls. |
+| `debug-pod.yaml` | A curl pod for testing service connectivity. |
+| `values-examples-with-explanations.yaml` | Reference file with comments explaining each Consul Helm chart option. |
 
 ## Prerequisites
 
