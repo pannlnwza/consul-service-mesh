@@ -29,55 +29,35 @@ The e-commerce app consists of 11 microservices using **publicly available GCP c
 | adservice | Java | Contextual advertisements |
 | redis-cart | Redis | In-memory store for cart data |
 
-## Repository Structure
+## Files and Scripts
 
-```
-consul-service-mesh/
-|-- README.md
-|-- terraform/                   # AWS EKS cluster provisioning
-|   |-- main.tf                  # VPC + EKS cluster definition
-|   |-- variables.tf             # Configurable variables (region, CIDR, etc.)
-|   |-- providers.tf             # Terraform provider requirements
-|   +-- data.tf                  # AWS availability zones data source
-|-- kubernetes/                  # Kubernetes and Consul manifests
-|   |-- config.yaml              # Original GCP microservices manifests (no Consul)
-|   |-- config-consul.yaml       # Consul-adapted manifests (with sidecar annotations)
-|   |-- consul-values.yaml       # Helm values for Consul on EKS (gp2 storage)
-|   |-- consul-values-lke.yaml   # Helm values for Consul on LKE (linode storage)
-|   |-- consul-mesh-gateway.yaml # Mesh gateway peering configuration
-|   |-- exported-service.yaml    # Export services to peered clusters
-|   |-- service-resolver.yaml    # Failover routing rules
-|   |-- intentions.yaml          # Service-to-service authorization
-|   |-- debug-pod.yaml           # Curl debug pod for troubleshooting
-|   +-- values-examples-with-explanations.yaml
-+-- screenshots/                 # Evidence of working system
-```
+### Terraform (`terraform/`)
 
-## File Descriptions
-
-### Terraform
+Provisions the AWS EKS cluster infrastructure.
 
 | File | Description |
 |------|-------------|
-| `main.tf` | Provisions an AWS VPC (3 public + 3 private subnets) and an EKS cluster with 3 `t3.small` worker nodes. Includes the EBS CSI driver addon required by Consul for persistent storage. |
-| `variables.tf` | Configurable parameters: AWS region (default `ap-southeast-1`), VPC CIDR blocks, Kubernetes version (`1.31`), cluster name, and AWS credentials. |
-| `providers.tf` | AWS Terraform provider (v5.3+). |
-| `data.tf` | Fetches available AWS availability zones. |
+| `main.tf` | VPC (3 public + 3 private subnets), EKS cluster with 3 `t3.small` nodes, and EBS CSI driver addon for Consul storage |
+| `variables.tf` | Configurable parameters: AWS region (`ap-southeast-1`), VPC CIDRs, K8s version (`1.31`), cluster name, AWS credentials |
+| `providers.tf` | AWS Terraform provider (v5.3+) |
+| `data.tf` | Fetches available AWS availability zones |
 
-### Kubernetes Manifests
+### Kubernetes Manifests (`kubernetes/`)
+
+Deployment manifests for the microservices and Consul service mesh configuration.
 
 | File | Description |
 |------|-------------|
-| `config.yaml` | Original Google Online Boutique manifests using direct service addresses. Used for non-mesh deployment. |
-| `config-consul.yaml` | Modified manifests with Consul Connect annotations. Changes service addresses from `<service>:<port>` to `localhost:<port>` so traffic routes through the local sidecar proxy. |
-| `consul-values.yaml` | Helm chart values for Consul on EKS. Enables peering, TLS, sidecar injection, mesh gateway, and the Consul UI. Uses `gp2` storage class. |
-| `consul-values-lke.yaml` | Same as above but for Linode LKE, using `linode-block-storage-retain` storage class. |
-| `consul-mesh-gateway.yaml` | Configures peering traffic to route through mesh gateways instead of direct pod-to-pod connectivity. |
-| `exported-service.yaml` | Makes `shippingservice` visible to the peered cluster for cross-cluster failover. |
-| `service-resolver.yaml` | Failover rules. If `shippingservice` is unhealthy locally, route to the `lke` peer (15s timeout). |
-| `intentions.yaml` | Authorization rules for cross-cluster communication. Consul denies all traffic by default with mTLS, so intentions explicitly allow specific calls. |
-| `debug-pod.yaml` | A curl pod for testing service connectivity. |
-| `values-examples-with-explanations.yaml` | Reference file with comments explaining each Consul Helm chart option. |
+| `config.yaml` | Original GCP Online Boutique manifests with direct service addresses. Used for non-mesh deployment |
+| `config-consul.yaml` | Consul-adapted manifests. Adds sidecar annotations and changes addresses to `localhost:<port>` so traffic routes through the Envoy proxy |
+| `consul-values.yaml` | Helm values for Consul on EKS. Enables peering, TLS, sidecar injection, mesh gateway, Consul UI. Uses `gp2` storage |
+| `consul-values-lke.yaml` | Helm values for Consul on LKE. Same config but uses `linode-block-storage-retain` storage |
+| `consul-mesh-gateway.yaml` | Routes peering traffic through mesh gateways instead of direct pod-to-pod connectivity |
+| `exported-service.yaml` | Exports `shippingservice` to the peered cluster for cross-cluster failover |
+| `service-resolver.yaml` | Failover rules: if `shippingservice` is unhealthy locally, route to the `lke` peer (15s timeout) |
+| `intentions.yaml` | Authorization rules for cross-cluster communication. Consul denies all traffic by default with mTLS |
+| `debug-pod.yaml` | Curl pod for testing service connectivity |
+| `values-examples-with-explanations.yaml` | Reference file with comments explaining Consul Helm chart options |
 
 ## Prerequisites
 
@@ -149,6 +129,12 @@ kubectl apply -f kubernetes/consul-mesh-gateway.yaml
 ```
 
 ### Step 6: Establish Cluster Peering
+
+This can be done via the **Consul UI** or CLI:
+
+**Via Consul UI:** Go to the Consul UI on EKS, navigate to Peers, click "Add peer connection", generate a token, then go to the Consul UI on LKE and use that token to establish the connection.
+
+**Via CLI:**
 
 ```bash
 # On EKS, generate a peering token
