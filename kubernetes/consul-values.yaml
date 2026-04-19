@@ -8,6 +8,7 @@ global:
 server:
   replicas: 1
   bootstrapExpect: 1
+  storageClass: gp2
   extraConfig: |
     {
       "log_level": "TRACE"
