@@ -160,12 +160,14 @@ spec:
     spec:
       containers:
       - name: server
-        image: gcr.io/google-samples/microservices-demo/currencyservice
+        image: gcr.io/google-samples/microservices-demo/currencyservice:v0.8.0
         ports:
         - containerPort: 7000
         env:
         - name: PORT
           value: "7000"
+        - name: DISABLE_PROFILER
+          value: "1"
 ---
 apiVersion: v1
 kind: Service
