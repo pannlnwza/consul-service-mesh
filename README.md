@@ -202,10 +202,10 @@ kubectl scale deployment shippingservice --replicas=1
 ### Consul UI
 
 ![Consul UI - EKS Services](screenshots/03-consul-ui-services-eks.png)
-*Consul dashboard on EKS showing all registered microservices.*
+*Consul dashboard on EKS showing all registered microservices, including the local shippingservice and the imported shippingservice from the peered LKE cluster.*
 
 ![Consul UI - LKE Services](screenshots/04-consul-ui-services-lke.png)
-*Consul dashboard on LKE showing the shippingservice registered for failover.*
+*Consul dashboard on LKE showing shippingservice, which serves as the failover target for EKS.*
 
 ![Consul UI - Peering EKS](screenshots/05-consul-ui-peering-eks.png)
 *Cluster peering from EKS side, showing active connection to LKE.*
