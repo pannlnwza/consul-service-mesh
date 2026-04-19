@@ -67,7 +67,7 @@ module "eks" {
       max_size     = 3
       desired_size = 3
 
-      instance_types = ["t2.small"]
+      instance_types = ["t3.small"]
 
       # add permission for ebs storage creation for Consul
       iam_role_additional_policies = {
