@@ -9,7 +9,7 @@ variable public_subnet_cidr_blocks {
 }
 
 variable k8s_version {
-    default = "1.27"
+    default = "1.31"
 }
 
 variable k8s_cluster_name {
